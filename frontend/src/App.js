@@ -1107,7 +1107,7 @@ function App() {
 
   const [assets, setAssets] = useState([]);
   const [activeView, setActiveView] = useState("assets");
-
+const [activityLogs, setActivityLogs] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -1136,7 +1136,7 @@ function App() {
   });
 
   const [toasts, setToasts] = useState([]);
-  const [activityLog, setActivityLog] = useState([]);
+  
 
   const [users, setUsers] = useState([
     {
@@ -1173,21 +1173,46 @@ function App() {
     }, 3500);
   };
 
-  const addActivity = (title, meta) => {
-    const entry = {
-      id: Date.now() + Math.random(),
-      title,
-      meta,
-      time: new Date().toLocaleString(),
-    };
-    setActivityLog((prev) => [entry, ...prev].slice(0, 12));
-  };
 
   const generateAssetTag = () => {
     const next = assets.length + 1;
     return `NXS-${String(next).padStart(4, "0")}`;
   };
+  const formatActivityTitle = (action) => {
+  switch (action) {
+    case "CREATE_ASSET":
+      return "Asset registered";
+    case "UPDATE_ASSET":
+      return "Asset updated";
+    case "DELETE_ASSET":
+      return "Asset removed";
+    default:
+      return action;
+  }
+};
+const fetchActivityLogs = async () => {
+  try {
+    const token = localStorage.getItem("token");
 
+    const res = await fetch("http://localhost:5000/activity-logs", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      
+    });
+  
+
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch activity logs");
+    }
+
+    const data = await res.json();
+    setActivityLogs(data);
+  } catch (error) {
+    console.error("Failed to fetch activity logs:", error);
+  }
+};
   const fetchAssets = async () => {
     try {
       const res = await fetch(`${API_URL}/assets`, {
@@ -1213,9 +1238,11 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    if (token) fetchAssets();
-  }, [token]);
+ useEffect(() => {
+  fetchAssets();
+  fetchActivityLogs();
+  
+}, []);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1241,7 +1268,6 @@ function App() {
         setEmail("");
         setPassword("");
         pushToast("Authentication successful", "success");
-        addActivity("User login", `Authenticated as ${data.user.email}`);
       } else {
         pushToast(data.message || "Login failed", "danger");
       }
@@ -1251,7 +1277,6 @@ function App() {
   };
 
   const handleLogout = () => {
-    addActivity("User logout", `Ended session for ${user?.email || "current user"}`);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setToken("");
@@ -1310,19 +1335,17 @@ function App() {
       const data = await res.json();
 
       if (res.ok) {
-        const actionLabel = editingId ? "Asset updated" : "Asset created";
+        
         pushToast(
           editingId
             ? "Asset record updated successfully"
             : "Asset registered successfully",
           "success"
         );
-        addActivity(
-          actionLabel,
-          `${payload.assetTag || "New tag"} • ${payload.name}`
-        );
+       
         resetForm();
         fetchAssets();
+        fetchActivityLogs();
       } else {
         pushToast(data.message || "Operation failed", "danger");
       }
@@ -1347,11 +1370,11 @@ function App() {
 
           if (res.ok) {
             pushToast("Asset removed from registry", "warning");
-            addActivity("Asset removed", `${asset.assetTag || "No tag"} • ${asset.name}`);
             setSelectedAsset((prev) =>
               prev?._id === asset._id ? null : prev
             );
             fetchAssets();
+            fetchActivityLogs();
           } else {
             pushToast(data.message || "Delete failed", "danger");
           }
@@ -1378,7 +1401,6 @@ function App() {
     });
     setEditingId(asset._id);
     pushToast("Edit mode active", "warning");
-    addActivity("Edit initiated", `${asset.assetTag || "No tag"} • ${asset.name}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -1394,7 +1416,6 @@ function App() {
     };
     setUsers((prev) => [newUser, ...prev]);
     pushToast("User profile added to admin panel", "success");
-    addActivity("User created", `${newUser.email} • ${newUser.role}`);
     setUserForm({
       name: "",
       email: "",
@@ -2098,17 +2119,19 @@ function App() {
                   <div className="panel-header">
                     <div className="panel-title">Recent Activity</div>
                     <div className="panel-sub">
-                      Latest user and asset actions in this session.
+                      Latest asset actions recorded by the system.
                     </div>
                   </div>
                   <div className="panel-body">
                     <div className="activity-list">
-                      {activityLog.length > 0 ? (
-                        activityLog.map((item) => (
-                          <div className="activity-item" key={item.id}>
-                            <div className="activity-title">{item.title}</div>
-                            <div className="activity-meta">{item.meta}</div>
-                            <div className="activity-time">{item.time}</div>
+                      {activityLogs.length > 0 ? (
+                        activityLogs.slice(0, 5).map((item) => (
+                          <div className="activity-item" key={item._id}>
+                            <div className="activity-title">{formatActivityTitle(item.action)}</div>
+                            <div className="activity-meta">{item.details}</div>
+                            <div className="activity-time">
+                             {new Date(item.createdAt).toLocaleString()}
+                            </div>
                           </div>
                         ))
                       ) : (
