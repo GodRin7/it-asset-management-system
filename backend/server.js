@@ -46,5 +46,19 @@ app.delete("/assets/:id", async (req, res) => {
   await Asset.findByIdAndDelete(req.params.id);
   res.json({ message: "Deleted" });
 });
+// UPDATE
+app.put("/assets/:id", async (req, res) => {
+  try {
+    const updatedAsset = await Asset.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updatedAsset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 app.listen(5000, () => console.log("Server running on port 5000")); 

@@ -10,6 +10,7 @@ function App() {
     assignedTo: "",
     status: ""
   });
+  const [editId, setEditId] = useState(null);
 
   const fetchAssets = async () => {
     const res = await fetch("http://localhost:5000/assets");
@@ -25,20 +26,7 @@ function App() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const addAsset = async () => {
-    if (!form.name.trim()) {
-      alert("Asset name is required");
-      return;
-    }
-
-    await fetch("http://localhost:5000/assets", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(form)
-    });
-
+  const resetForm = () => {
     setForm({
       name: "",
       type: "",
@@ -46,7 +34,30 @@ function App() {
       assignedTo: "",
       status: ""
     });
+    setEditId(null);
+  };
 
+  const addOrUpdateAsset = async () => {
+    if (!form.name.trim()) {
+      alert("Asset name is required");
+      return;
+    }
+
+    const url = editId
+      ? `http://localhost:5000/assets/${editId}`
+      : "http://localhost:5000/assets";
+
+    const method = editId ? "PUT" : "POST";
+
+    await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(form)
+    });
+
+    resetForm();
     fetchAssets();
   };
 
@@ -55,6 +66,17 @@ function App() {
       method: "DELETE"
     });
     fetchAssets();
+  };
+
+  const editAsset = (asset) => {
+    setForm({
+      name: asset.name || "",
+      type: asset.type || "",
+      serialNumber: asset.serialNumber || "",
+      assignedTo: asset.assignedTo || "",
+      status: asset.status || ""
+    });
+    setEditId(asset._id);
   };
 
   return (
@@ -94,8 +116,16 @@ function App() {
             value={form.status}
             onChange={handleChange}
           />
-          <button onClick={addAsset}>Add Asset</button>
+          <button onClick={addOrUpdateAsset}>
+            {editId ? "Update Asset" : "Add Asset"}
+          </button>
         </div>
+
+        {editId && (
+          <button className="cancel-btn" onClick={resetForm}>
+            Cancel Edit
+          </button>
+        )}
       </div>
 
       <div className="card">
@@ -122,12 +152,20 @@ function App() {
                     <td>{asset.assignedTo}</td>
                     <td>{asset.status}</td>
                     <td>
-                      <button
-                        className="delete-btn"
-                        onClick={() => deleteAsset(asset._id)}
-                      >
-                        Delete
-                      </button>
+                      <div className="action-buttons">
+                        <button
+                          className="edit-btn"
+                          onClick={() => editAsset(asset)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={() => deleteAsset(asset._id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
