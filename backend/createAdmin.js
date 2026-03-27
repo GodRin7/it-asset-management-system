@@ -38,5 +38,5 @@ const createAdmin = async () => {
     process.exit(1);
   }
 };
-
+role: "staff"
 createAdmin();

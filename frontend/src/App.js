@@ -18,6 +18,7 @@ function App() {
     type: "",
     status: "",
   });
+  const [editingId, setEditingId] = useState(null);
 
   const fetchAssets = async () => {
     try {
@@ -92,27 +93,75 @@ function App() {
     e.preventDefault();
 
     try {
-      const res = await fetch(`${API_URL}/assets`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      });
+      let res;
+
+      if (editingId) {
+        res = await fetch(`${API_URL}/assets/${editingId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+      } else {
+        res = await fetch(`${API_URL}/assets`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(formData),
+        });
+      }
 
       const data = await res.json();
 
       if (res.ok) {
         setFormData({ name: "", type: "", status: "" });
+        setEditingId(null);
         fetchAssets();
-        setMessage("Asset added successfully");
+        setMessage(editingId ? "Asset updated" : "Asset added");
       } else {
-        setMessage(data.message || "Failed to add asset");
+        setMessage(data.message || "Operation failed");
       }
     } catch (error) {
-      setMessage("Error adding asset");
+      setMessage("Error saving asset");
     }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this asset?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/assets/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("Asset deleted");
+        fetchAssets();
+      } else {
+        setMessage(data.message || "Delete failed");
+      }
+    } catch (error) {
+      setMessage("Error deleting asset");
+    }
+  };
+
+  const handleEdit = (asset) => {
+    setFormData({
+      name: asset.name,
+      type: asset.type,
+      status: asset.status,
+    });
+
+    setEditingId(asset._id);
   };
 
   if (!token) {
@@ -171,7 +220,7 @@ function App() {
 
       {message && <p>{message}</p>}
 
-      <h2>Add Asset</h2>
+      <h2>{editingId ? "Edit Asset" : "Add Asset"}</h2>
       <form onSubmit={handleAddAsset} style={{ marginBottom: "20px" }}>
         <input
           type="text"
@@ -200,7 +249,9 @@ function App() {
           required
           style={{ marginRight: "10px", padding: "8px" }}
         />
-        <button type="submit">Add</button>
+        <button type="submit">
+          {editingId ? "Update" : "Add"}
+        </button>
       </form>
 
       <h2>Assets</h2>
@@ -210,6 +261,7 @@ function App() {
             <th>Name</th>
             <th>Type</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -219,11 +271,17 @@ function App() {
                 <td>{asset.name}</td>
                 <td>{asset.type}</td>
                 <td>{asset.status}</td>
+                <td>
+                  <button onClick={() => handleEdit(asset)}>Edit</button>
+                  <button onClick={() => handleDelete(asset._id)}>
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="3">No assets found</td>
+              <td colSpan="4">No assets found</td>
             </tr>
           )}
         </tbody>

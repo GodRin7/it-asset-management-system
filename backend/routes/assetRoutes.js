@@ -7,6 +7,10 @@ router.use(verifyToken);
 
 // CREATE
 router.post("/", async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
   try {
     const asset = new Asset(req.body);
     await asset.save();
@@ -27,6 +31,19 @@ router.get("/", async (req, res) => {
 });
 
 // DELETE
+
+router.delete("/:id", async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  try {
+    await Asset.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.delete("/:id", async (req, res) => {
   try {
     await Asset.findByIdAndDelete(req.params.id);
