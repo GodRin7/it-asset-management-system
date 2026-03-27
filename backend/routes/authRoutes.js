@@ -10,26 +10,22 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Check input
     if (!email || !password) {
       return res.status(400).json({ message: "Email and password required" });
     }
 
-    // 2. Find user
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 3. Compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // 4. Generate token
     const token = jwt.sign(
       {
         userId: user._id,
@@ -40,7 +36,6 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // 5. Send response
     res.json({
       message: "Login successful",
       token,

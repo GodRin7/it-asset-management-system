@@ -1,64 +1,29 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+
+const assetRoutes = require("./routes/assetRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// Routes
+app.use("/assets", assetRoutes);
+app.use("/auth", authRoutes);
+
 // MongoDB connection
-mongoose.connect("mongodb+srv://admin:123@cluster0.2mbectl.mongodb.net/assetsDB?retryWrites=true&w=majority")
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-// Schema
-const AssetSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  type: String,
-  serialNumber: String,
-  assignedTo: String,
-  status: String,
-  dateAdded: { type: Date, default: Date.now }
-});
-
-const Asset = mongoose.model("Asset", AssetSchema);
-
-// CREATE
-app.post("/assets", async (req, res) => {
-  try {
-    const asset = new Asset(req.body);
-    await asset.save();
-    res.json(asset);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// READ
-app.get("/assets", async (req, res) => {
-  const assets = await Asset.find();
-  res.json(assets);
-});
-
-// DELETE
-app.delete("/assets/:id", async (req, res) => {
-  await Asset.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
-// UPDATE
-app.put("/assets/:id", async (req, res) => {
-  try {
-    const updatedAsset = await Asset.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(updatedAsset);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-
-app.listen(5000, () => console.log("Server running on port 5000")); 
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(process.env.PORT || 5000, () => {
+      console.log(`Server running on port ${process.env.PORT || 5000}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Database connection error:", error.message);
+  });
