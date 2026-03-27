@@ -1,6 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const API_URL = "http://localhost:5000";
+
+const STATUS_OPTIONS = ["Active", "In Repair", "Unassigned", "Retired"];
+const TYPE_OPTIONS = [
+  "Desktop",
+  "Laptop",
+  "Printer",
+  "Router",
+  "Switch",
+  "Monitor",
+  "Access Point",
+  "Server",
+];
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
@@ -18,10 +30,14 @@ function App() {
     type: "",
     serialNumber: "",
     assignedTo: "",
-    status: "",
+    status: "Active",
   });
+
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("name-asc");
 
   const fetchAssets = async () => {
     try {
@@ -92,6 +108,17 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      type: "",
+      serialNumber: "",
+      assignedTo: "",
+      status: "Active",
+    });
+    setEditingId(null);
+  };
+
   const handleAddAsset = async (e) => {
     e.preventDefault();
 
@@ -121,14 +148,7 @@ function App() {
       const data = await res.json();
 
       if (res.ok) {
-        setFormData({
-          name: "",
-          type: "",
-          serialNumber: "",
-          assignedTo: "",
-          status: "",
-        });
-        setEditingId(null);
+        resetForm();
         fetchAssets();
         setMessage(
           editingId ? "Asset updated successfully" : "Asset added successfully"
@@ -171,11 +191,19 @@ function App() {
       type: asset.type || "",
       serialNumber: asset.serialNumber || "",
       assignedTo: asset.assignedTo || "",
-      status: asset.status || "",
+      status: asset.status || "Active",
     });
 
     setEditingId(asset._id);
     setMessage("Editing asset");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("All");
+    setTypeFilter("All");
+    setSortBy("name-asc");
   };
 
   const getStatusStyle = (status) => {
@@ -205,6 +233,14 @@ function App() {
       };
     }
 
+    if (value === "retired") {
+      return {
+        background: "rgba(239, 68, 68, 0.18)",
+        color: "#fca5a5",
+        border: "1px solid rgba(239, 68, 68, 0.35)",
+      };
+    }
+
     return {
       background: "rgba(99, 102, 241, 0.18)",
       color: "#c7d2fe",
@@ -212,19 +248,44 @@ function App() {
     };
   };
 
-  const filteredAssets = assets.filter((asset) => {
-    const query = searchTerm.toLowerCase();
+  const filteredAssets = useMemo(() => {
+    let result = assets.filter((asset) => {
+      const query = searchTerm.toLowerCase();
 
-    return (
-      asset.name?.toLowerCase().includes(query) ||
-      asset.type?.toLowerCase().includes(query) ||
-      asset.serialNumber?.toLowerCase().includes(query) ||
-      asset.assignedTo?.toLowerCase().includes(query) ||
-      asset.status?.toLowerCase().includes(query)
-    );
-  });
+      const matchesSearch =
+        asset.name?.toLowerCase().includes(query) ||
+        asset.type?.toLowerCase().includes(query) ||
+        asset.serialNumber?.toLowerCase().includes(query) ||
+        asset.assignedTo?.toLowerCase().includes(query) ||
+        asset.status?.toLowerCase().includes(query);
 
-  const totalAssets = filteredAssets.length;
+      const matchesStatus =
+        statusFilter === "All" || asset.status === statusFilter;
+
+      const matchesType = typeFilter === "All" || asset.type === typeFilter;
+
+      return matchesSearch && matchesStatus && matchesType;
+    });
+
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case "name-asc":
+          return (a.name || "").localeCompare(b.name || "");
+        case "name-desc":
+          return (b.name || "").localeCompare(a.name || "");
+        case "status":
+          return (a.status || "").localeCompare(b.status || "");
+        case "type":
+          return (a.type || "").localeCompare(b.type || "");
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [assets, searchTerm, statusFilter, typeFilter, sortBy]);
+
+  const totalAssets = assets.length;
   const activeAssets = assets.filter(
     (asset) => asset.status?.toLowerCase() === "active"
   ).length;
@@ -234,6 +295,12 @@ function App() {
   const unassignedAssets = assets.filter(
     (asset) => asset.status?.toLowerCase() === "unassigned"
   ).length;
+  const retiredAssets = assets.filter(
+    (asset) => asset.status?.toLowerCase() === "retired"
+  ).length;
+
+  const utilizationRate =
+    totalAssets > 0 ? Math.round((activeAssets / totalAssets) * 100) : 0;
 
   const pageStyle = {
     minHeight: "100vh",
@@ -241,21 +308,21 @@ function App() {
       "radial-gradient(circle at top left, #1e293b 0%, #0f172a 35%, #020617 100%)",
     color: "#e5e7eb",
     padding: "32px 20px",
-    fontFamily: "Arial, sans-serif",
+    fontFamily: "Inter, Arial, sans-serif",
   };
 
   const shellStyle = {
-    maxWidth: "1200px",
+    maxWidth: "1400px",
     margin: "0 auto",
   };
 
   const cardStyle = {
     background: "rgba(15, 23, 42, 0.72)",
     border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: "20px",
+    borderRadius: "22px",
     boxShadow: "0 20px 60px rgba(0, 0, 0, 0.35)",
-    backdropFilter: "blur(12px)",
-    WebkitBackdropFilter: "blur(12px)",
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
   };
 
   const inputStyle = {
@@ -267,6 +334,15 @@ function App() {
     color: "#f8fafc",
     outline: "none",
     boxSizing: "border-box",
+    fontSize: "14px",
+  };
+
+  const labelStyle = {
+    display: "block",
+    marginBottom: "8px",
+    color: "#cbd5e1",
+    fontSize: "13px",
+    fontWeight: "600",
   };
 
   const primaryButtonStyle = {
@@ -289,6 +365,17 @@ function App() {
     borderRadius: "12px",
     padding: "10px 14px",
     cursor: "pointer",
+    fontWeight: "600",
+  };
+
+  const subtleButtonStyle = {
+    background: "rgba(255,255,255,0.04)",
+    color: "#cbd5e1",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "12px",
+    padding: "14px 18px",
+    cursor: "pointer",
+    fontWeight: "600",
   };
 
   const dangerButtonStyle = {
@@ -315,31 +402,33 @@ function App() {
   if (!token) {
     return (
       <div style={pageStyle}>
-        <div style={{ maxWidth: "420px", margin: "80px auto" }}>
-          <div style={{ ...cardStyle, padding: "32px" }}>
+        <div style={{ maxWidth: "430px", margin: "90px auto" }}>
+          <div style={{ ...cardStyle, padding: "34px" }}>
             <div style={{ marginBottom: "24px" }}>
               <div
                 style={{
-                  fontSize: "14px",
+                  fontSize: "13px",
                   color: "#94a3b8",
-                  letterSpacing: "1px",
+                  letterSpacing: "1.6px",
                   textTransform: "uppercase",
                   marginBottom: "10px",
+                  fontWeight: "700",
                 }}
               >
-                Secure Access
+                Enterprise Access
               </div>
-              <h1
+              <h1 style={{ margin: 0, fontSize: "32px", color: "#f8fafc" }}>
+                Asset Control Portal
+              </h1>
+              <p
                 style={{
-                  margin: 0,
-                  fontSize: "32px",
-                  color: "#f8fafc",
+                  color: "#94a3b8",
+                  marginTop: "10px",
+                  marginBottom: 0,
+                  lineHeight: "1.6",
                 }}
               >
-                Admin Login
-              </h1>
-              <p style={{ color: "#94a3b8", marginTop: "10px", marginBottom: 0 }}>
-                Sign in to manage assets, status, and inventory records.
+                Sign in to access the internal asset operations dashboard.
               </p>
             </div>
 
@@ -347,7 +436,7 @@ function App() {
               <div style={{ marginBottom: "14px" }}>
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -366,7 +455,10 @@ function App() {
                 />
               </div>
 
-              <button type="submit" style={{ ...primaryButtonStyle, width: "100%" }}>
+              <button
+                type="submit"
+                style={{ ...primaryButtonStyle, width: "100%" }}
+              >
                 Login
               </button>
             </form>
@@ -397,43 +489,77 @@ function App() {
       <div style={shellStyle}>
         <div
           style={{
+            ...cardStyle,
+            padding: "24px 28px",
+            marginBottom: "24px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "24px",
-            gap: "16px",
             flexWrap: "wrap",
+            gap: "18px",
           }}
         >
           <div>
             <div
               style={{
                 color: "#94a3b8",
-                fontSize: "14px",
+                fontSize: "13px",
                 textTransform: "uppercase",
-                letterSpacing: "1px",
+                letterSpacing: "1.4px",
                 marginBottom: "10px",
+                fontWeight: "700",
               }}
             >
-              Asset Operations Dashboard
+              Enterprise IT Operations
             </div>
             <h1
               style={{
                 margin: 0,
-                fontSize: "40px",
+                fontSize: "38px",
                 color: "#f8fafc",
+                lineHeight: "1.1",
               }}
             >
-              IT Asset Management System
+              Asset Management Console
             </h1>
-            <p style={{ color: "#94a3b8", marginTop: "10px", marginBottom: 0 }}>
-              Logged in as <strong style={{ color: "#fff" }}>{user?.email}</strong> ({user?.role})
+            <p
+              style={{
+                color: "#94a3b8",
+                marginTop: "10px",
+                marginBottom: 0,
+              }}
+            >
+              Logged in as{" "}
+              <strong style={{ color: "#fff" }}>{user?.email}</strong> (
+              {user?.role})
             </p>
           </div>
 
-          <button onClick={handleLogout} style={secondaryButtonStyle}>
-            Logout
-          </button>
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "12px",
+                background: "rgba(34, 197, 94, 0.12)",
+                border: "1px solid rgba(34, 197, 94, 0.2)",
+                color: "#86efac",
+                fontWeight: "700",
+                fontSize: "13px",
+              }}
+            >
+              System Online
+            </div>
+            <button onClick={handleLogout} style={secondaryButtonStyle}>
+              Logout
+            </button>
+          </div>
         </div>
 
         {message && (
@@ -449,6 +575,31 @@ function App() {
           </div>
         )}
 
+        {editingId && (
+          <div
+            style={{
+              ...cardStyle,
+              padding: "16px 18px",
+              marginBottom: "22px",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
+              color: "#fde68a",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <strong>Edit Mode Active</strong> — You are updating an existing
+              asset record.
+            </div>
+            <button onClick={resetForm} style={secondaryButtonStyle}>
+              Cancel Edit
+            </button>
+          </div>
+        )}
+
         <div
           style={{
             display: "grid",
@@ -458,236 +609,358 @@ function App() {
           }}
         >
           {[
-            { label: "Total Assets", value: totalAssets },
-            { label: "Active", value: activeAssets },
-            { label: "In Repair", value: repairAssets },
-            { label: "Unassigned", value: unassignedAssets },
+            { label: "Total Assets", value: totalAssets, sub: "Full inventory" },
+            { label: "Active", value: activeAssets, sub: "Operational units" },
+            { label: "In Repair", value: repairAssets, sub: "Maintenance queue" },
+            { label: "Unassigned", value: unassignedAssets, sub: "Available stock" },
+            { label: "Retired", value: retiredAssets, sub: "Decommissioned" },
+            { label: "Utilization", value: `${utilizationRate}%`, sub: "Currently active" },
           ].map((item) => (
             <div key={item.label} style={{ ...cardStyle, padding: "22px" }}>
-              <div style={{ color: "#94a3b8", fontSize: "14px", marginBottom: "10px" }}>
+              <div
+                style={{
+                  color: "#94a3b8",
+                  fontSize: "13px",
+                  marginBottom: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "1px",
+                }}
+              >
                 {item.label}
               </div>
-              <div style={{ fontSize: "32px", fontWeight: "700", color: "#f8fafc" }}>
+              <div
+                style={{
+                  fontSize: "32px",
+                  fontWeight: "800",
+                  color: "#f8fafc",
+                  lineHeight: "1",
+                  marginBottom: "8px",
+                }}
+              >
                 {item.value}
               </div>
+              <div style={{ color: "#64748b", fontSize: "13px" }}>{item.sub}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ ...cardStyle, padding: "24px", marginBottom: "24px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "18px",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            <div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(320px, 1.1fr) minmax(340px, 1.9fr)",
+            gap: "24px",
+            marginBottom: "24px",
+          }}
+        >
+          <div style={{ ...cardStyle, padding: "24px" }}>
+            <div style={{ marginBottom: "18px" }}>
               <h2 style={{ margin: 0, color: "#f8fafc" }}>
-                {editingId ? "Edit Asset" : "Add Asset"}
+                {editingId ? "Update Asset Record" : "Register New Asset"}
               </h2>
               <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
-                Maintain inventory records with status tracking.
+                Capture asset identity, ownership, and operational status.
               </p>
             </div>
+
+            <form
+              onSubmit={handleAddAsset}
+              style={{ display: "grid", gap: "14px" }}
+            >
+              <div>
+                <label style={labelStyle}>Asset Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="e.g. Dell OptiPlex 7090"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Asset Type</label>
+                <select
+                  name="type"
+                  value={formData.type}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                >
+                  <option value="">Select type</option>
+                  {TYPE_OPTIONS.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Serial Number</label>
+                <input
+                  type="text"
+                  name="serialNumber"
+                  placeholder="e.g. SN-2026-001"
+                  value={formData.serialNumber}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Assigned To</label>
+                <input
+                  type="text"
+                  name="assignedTo"
+                  placeholder="e.g. Juan Dela Cruz"
+                  value={formData.assignedTo}
+                  onChange={handleChange}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Status</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  required
+                  style={inputStyle}
+                >
+                  {STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "10px",
+                  marginTop: "6px",
+                }}
+              >
+                <button type="submit" style={primaryButtonStyle}>
+                  {editingId ? "Update Asset" : "Add Asset"}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  style={subtleButtonStyle}
+                >
+                  Clear Form
+                </button>
+              </div>
+            </form>
           </div>
 
-          <form
-            onSubmit={handleAddAsset}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "14px",
-              alignItems: "end",
-            }}
-          >
-            <div>
-              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
-                Asset Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                placeholder="e.g. Dell OptiPlex 7090"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
-                Type
-              </label>
-              <input
-                type="text"
-                name="type"
-                placeholder="e.g. Desktop"
-                value={formData.type}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
-                Serial Number
-              </label>
-              <input
-                type="text"
-                name="serialNumber"
-                placeholder="e.g. SN-2026-001"
-                value={formData.serialNumber}
-                onChange={handleChange}
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
-                Assigned To
-              </label>
-              <input
-                type="text"
-                name="assignedTo"
-                placeholder="e.g. Juan Dela Cruz"
-                value={formData.assignedTo}
-                onChange={handleChange}
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
-                Status
-              </label>
-              <input
-                type="text"
-                name="status"
-                placeholder="e.g. Active"
-                value={formData.status}
-                onChange={handleChange}
-                required
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <button type="submit" style={{ ...primaryButtonStyle, width: "100%" }}>
-                {editingId ? "Update Asset" : "Add Asset"}
+          <div style={{ ...cardStyle, padding: "24px" }}>
+            <div
+              style={{
+                marginBottom: "18px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "16px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0, color: "#f8fafc" }}>Asset Directory</h2>
+                <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
+                  Search, filter, and review all registered assets.
+                </p>
+              </div>
+              <button onClick={clearFilters} style={secondaryButtonStyle}>
+                Reset Filters
               </button>
             </div>
-          </form>
-        </div>
 
-        <div style={{ ...cardStyle, padding: "24px" }}>
-          <div
-            style={{
-              marginBottom: "18px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "16px",
-              flexWrap: "wrap",
-            }}
-          >
-            <div>
-              <h2 style={{ margin: 0, color: "#f8fafc" }}>Assets</h2>
-              <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
-                View and manage current inventory records.
-              </p>
-            </div>
-
-            <div style={{ minWidth: "280px", flex: "1", maxWidth: "360px" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr 1fr 1fr",
+                gap: "12px",
+                marginBottom: "18px",
+              }}
+            >
               <input
                 type="text"
-                placeholder="Search by name, type, serial, assigned user, or status..."
+                placeholder="Search name, type, serial, owner, status..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={inputStyle}
               />
-            </div>
-          </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="All">All Status</option>
+                {STATUS_OPTIONS.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="All">All Types</option>
+                {TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="name-asc">Sort: Name A-Z</option>
+                <option value="name-desc">Sort: Name Z-A</option>
+                <option value="status">Sort: Status</option>
+                <option value="type">Sort: Type</option>
+              </select>
+            </div>
+
+            <div
               style={{
-                width: "100%",
-                borderCollapse: "separate",
-                borderSpacing: 0,
-                color: "#e5e7eb",
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginBottom: "18px",
               }}
             >
-              <thead>
-                <tr>
-                  <th style={tableHeadStyle}>Name</th>
-                  <th style={tableHeadStyle}>Type</th>
-                  <th style={tableHeadStyle}>Serial Number</th>
-                  <th style={tableHeadStyle}>Assigned To</th>
-                  <th style={tableHeadStyle}>Status</th>
-                  <th style={tableHeadStyle}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAssets.length > 0 ? (
-                  filteredAssets.map((asset, index) => (
-                    <tr
-                      key={asset._id}
-                      style={{
-                        background:
-                          index % 2 === 0
-                            ? "rgba(15, 23, 42, 0.55)"
-                            : "rgba(30, 41, 59, 0.4)",
-                      }}
-                    >
-                      <td style={tableCellStyle}>{asset.name}</td>
-                      <td style={tableCellStyle}>{asset.type}</td>
-                      <td style={tableCellStyle}>{asset.serialNumber || "—"}</td>
-                      <td style={tableCellStyle}>{asset.assignedTo || "—"}</td>
-                      <td style={tableCellStyle}>
-                        <span
+              <FilterPill label={`Showing: ${filteredAssets.length}`} />
+              <FilterPill label={`Status: ${statusFilter}`} />
+              <FilterPill label={`Type: ${typeFilter}`} />
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "separate",
+                  borderSpacing: 0,
+                  color: "#e5e7eb",
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th style={tableHeadStyle}>Name</th>
+                    <th style={tableHeadStyle}>Type</th>
+                    <th style={tableHeadStyle}>Serial Number</th>
+                    <th style={tableHeadStyle}>Assigned To</th>
+                    <th style={tableHeadStyle}>Status</th>
+                    <th style={tableHeadStyle}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAssets.length > 0 ? (
+                    filteredAssets.map((asset, index) => (
+                      <tr
+                        key={asset._id}
+                        style={{
+                          background:
+                            index % 2 === 0
+                              ? "rgba(15, 23, 42, 0.55)"
+                              : "rgba(30, 41, 59, 0.4)",
+                        }}
+                      >
+                        <td style={tableCellStyle}>
+                          <div style={{ fontWeight: "700", color: "#f8fafc" }}>
+                            {asset.name}
+                          </div>
+                        </td>
+                        <td style={tableCellStyle}>{asset.type}</td>
+                        <td style={tableCellStyle}>
+                          {asset.serialNumber || "—"}
+                        </td>
+                        <td style={tableCellStyle}>
+                          {asset.assignedTo || "—"}
+                        </td>
+                        <td style={tableCellStyle}>
+                          <span
+                            style={{
+                              ...getStatusStyle(asset.status),
+                              display: "inline-block",
+                              padding: "6px 12px",
+                              borderRadius: "999px",
+                              fontSize: "13px",
+                              fontWeight: "700",
+                            }}
+                          >
+                            {asset.status}
+                          </span>
+                        </td>
+                        <td style={tableCellStyle}>
+                          <button
+                            onClick={() => handleEdit(asset)}
+                            style={editButtonStyle}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(asset._id)}
+                            style={dangerButtonStyle}
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td style={tableCellStyle} colSpan="6">
+                        <div
                           style={{
-                            ...getStatusStyle(asset.status),
-                            display: "inline-block",
-                            padding: "6px 12px",
-                            borderRadius: "999px",
-                            fontSize: "13px",
-                            fontWeight: "700",
+                            padding: "28px 0",
+                            textAlign: "center",
+                            color: "#94a3b8",
                           }}
                         >
-                          {asset.status}
-                        </span>
-                      </td>
-                      <td style={tableCellStyle}>
-                        <button onClick={() => handleEdit(asset)} style={editButtonStyle}>
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(asset._id)}
-                          style={dangerButtonStyle}
-                        >
-                          Delete
-                        </button>
+                          No matching assets found.
+                        </div>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td style={tableCellStyle} colSpan="6">
-                      No assets found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FilterPill({ label }) {
+  return (
+    <div
+      style={{
+        padding: "8px 12px",
+        borderRadius: "999px",
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        color: "#cbd5e1",
+        fontSize: "13px",
+        fontWeight: "600",
+      }}
+    >
+      {label}
     </div>
   );
 }
@@ -697,13 +970,16 @@ const tableHeadStyle = {
   padding: "16px",
   background: "rgba(255,255,255,0.06)",
   color: "#cbd5e1",
-  fontSize: "14px",
+  fontSize: "13px",
   borderBottom: "1px solid rgba(255,255,255,0.08)",
+  textTransform: "uppercase",
+  letterSpacing: "0.8px",
 };
 
 const tableCellStyle = {
   padding: "16px",
   borderBottom: "1px solid rgba(255,255,255,0.06)",
+  fontSize: "14px",
 };
 
 export default App;
