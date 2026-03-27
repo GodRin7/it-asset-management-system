@@ -5,11 +5,6 @@ const verifyToken = require("../middleware/authMiddleware");
 const logActivity = require("../utils/logActivity");
 
 router.use(verifyToken);
-// TEST USER (temporary)
-router.get("/test-user", (req, res) => {
-  console.log("Decoded user:", req.user);
-  res.json(req.user);
-});
 
 // CREATE
 router.post("/", async (req, res) => {
@@ -25,8 +20,8 @@ router.post("/", async (req, res) => {
       action: "CREATE_ASSET",
       assetId: asset._id,
       assetName: asset.name,
-      userId: req.user.id,
-      userName: req.user.username,
+      userId: req.user.userId,
+      userName: req.user.email,
       details: `Created asset ${asset.name}${asset.assetTag ? ` (${asset.assetTag})` : ""}`,
     });
 
@@ -65,8 +60,8 @@ router.delete("/:id", async (req, res) => {
       action: "DELETE_ASSET",
       assetId: asset._id,
       assetName: asset.name,
-      userId: req.user.id,
-      userName: req.user.username,
+      userId: req.user.userId,
+      userName: req.user.email,
       details: `Deleted asset ${asset.name}${asset.assetTag ? ` (${asset.assetTag})` : ""}`,
     });
 
@@ -84,10 +79,10 @@ router.put("/:id", async (req, res) => {
 
   try {
     const updatedAsset = await Asset.findByIdAndUpdate(
-  req.params.id,
-  req.body,
-  { new: true, runValidators: true }
-);
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
     if (!updatedAsset) {
       return res.status(404).json({ message: "Asset not found" });
@@ -97,8 +92,8 @@ router.put("/:id", async (req, res) => {
       action: "UPDATE_ASSET",
       assetId: updatedAsset._id,
       assetName: updatedAsset.name,
-      userId: req.user.id,
-      userName: req.user.username,
+      userId: req.user.userId,
+      userName: req.user.email,
       details: `Updated asset ${updatedAsset.name}${updatedAsset.assetTag ? ` (${updatedAsset.assetTag})` : ""}`,
     });
 
