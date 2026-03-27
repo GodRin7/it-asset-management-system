@@ -19,6 +19,7 @@ function App() {
     status: "",
   });
   const [editingId, setEditingId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchAssets = async () => {
     try {
@@ -198,8 +199,16 @@ function App() {
       border: "1px solid rgba(99, 102, 241, 0.35)",
     };
   };
+const filteredAssets = assets.filter((asset) => {
+  const query = searchTerm.toLowerCase();
 
-  const totalAssets = assets.length;
+  return (
+    asset.name?.toLowerCase().includes(query) ||
+    asset.type?.toLowerCase().includes(query) ||
+    asset.status?.toLowerCase().includes(query)
+  );
+});
+  const totalAssets = filteredAssets.length;
   const activeAssets = assets.filter(
     (asset) => asset.status?.toLowerCase() === "active"
   ).length;
@@ -533,12 +542,33 @@ function App() {
         </div>
 
         <div style={{ ...cardStyle, padding: "24px" }}>
-          <div style={{ marginBottom: "18px" }}>
-            <h2 style={{ margin: 0, color: "#f8fafc" }}>Assets</h2>
-            <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
-              View and manage current inventory records.
-            </p>
-          </div>
+          <div
+  style={{
+    marginBottom: "18px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
+  }}
+>
+  <div>
+    <h2 style={{ margin: 0, color: "#f8fafc" }}>Assets</h2>
+    <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
+      View and manage current inventory records.
+    </p>
+  </div>
+
+  <div style={{ minWidth: "280px", flex: "1", maxWidth: "360px" }}>
+    <input
+      type="text"
+      placeholder="Search by name, type, or status..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      style={inputStyle}
+    />
+  </div>
+</div>
 
           <div style={{ overflowX: "auto" }}>
             <table
@@ -558,8 +588,8 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {assets.length > 0 ? (
-                  assets.map((asset, index) => (
+                {filteredAssets.length > 0 ? (
+  filteredAssets.map((asset, index) => (
                     <tr
                       key={asset._id}
                       style={{
