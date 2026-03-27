@@ -20,8 +20,8 @@ router.post("/", async (req, res) => {
       action: "CREATE_ASSET",
       assetId: asset._id,
       assetName: asset.name,
-      userId: req.user.userId,
-      userName: req.user.email,
+      userId: req.user?.userId || null,
+userName: req.user?.email || "Unknown User",
       details: `Created asset ${asset.name}${asset.assetTag ? ` (${asset.assetTag})` : ""}`,
     });
 
@@ -57,13 +57,13 @@ router.delete("/:id", async (req, res) => {
     await Asset.findByIdAndDelete(req.params.id);
 
     await logActivity({
-      action: "DELETE_ASSET",
-      assetId: asset._id,
-      assetName: asset.name,
-      userId: req.user.userId,
-      userName: req.user.email,
-      details: `Deleted asset ${asset.name}${asset.assetTag ? ` (${asset.assetTag})` : ""}`,
-    });
+  action: "DELETE_ASSET",
+  assetId: asset._id,
+  assetName: asset.name,
+  userId: req.user?.userId || null,
+  userName: req.user?.email || "Unknown User",
+  details: `Deleted asset ${asset.name}${asset.assetTag ? ` (${asset.assetTag})` : ""}`,
+});
 
     res.json({ message: "Asset deleted successfully" });
   } catch (err) {
@@ -92,8 +92,8 @@ router.put("/:id", async (req, res) => {
       action: "UPDATE_ASSET",
       assetId: updatedAsset._id,
       assetName: updatedAsset.name,
-      userId: req.user.userId,
-      userName: req.user.email,
+      userId: req.user?.userId || null,
+userName: req.user?.email || "Unknown User",
       details: `Updated asset ${updatedAsset.name}${updatedAsset.assetTag ? ` (${updatedAsset.assetTag})` : ""}`,
     });
 

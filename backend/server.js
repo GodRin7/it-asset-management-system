@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const assetRoutes = require("./routes/assetRoutes");
 const authRoutes = require("./routes/authRoutes");
+const activityLogRoutes = require("./routes/activityLogRoutes");
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use("/assets", assetRoutes);
 app.use("/auth", authRoutes);
+app.use("/activity-logs", activityLogRoutes);
 
 // Root test route
 app.get("/", (req, res) => {
