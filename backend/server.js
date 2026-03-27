@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -15,7 +16,12 @@ app.use(express.json());
 app.use("/assets", assetRoutes);
 app.use("/auth", authRoutes);
 
-// MongoDB connection
+// Root test route
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
+
+// MongoDB connection and server start
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
