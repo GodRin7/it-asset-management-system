@@ -1,16 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./App.css";
 
 function App() {
   const [assets, setAssets] = useState([]);
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({
     name: "",
-    type: "",
+    type: "Desktop",
     serialNumber: "",
     assignedTo: "",
-    status: ""
+    status: "Active"
   });
   const [editId, setEditId] = useState(null);
+
+  const assetTypes = [
+    "Desktop",
+    "Laptop",
+    "Router",
+    "Switch",
+    "Printer",
+    "Access Point"
+  ];
+
+  const assetStatuses = [
+    "Active",
+    "In Repair",
+    "Retired",
+    "Lost",
+    "Unassigned"
+  ];
 
   const fetchAssets = async () => {
     const res = await fetch("http://localhost:5000/assets");
@@ -29,10 +47,10 @@ function App() {
   const resetForm = () => {
     setForm({
       name: "",
-      type: "",
+      type: "Desktop",
       serialNumber: "",
       assignedTo: "",
-      status: ""
+      status: "Active"
     });
     setEditId(null);
   };
@@ -71,19 +89,69 @@ function App() {
   const editAsset = (asset) => {
     setForm({
       name: asset.name || "",
-      type: asset.type || "",
+      type: asset.type || "Desktop",
       serialNumber: asset.serialNumber || "",
       assignedTo: asset.assignedTo || "",
-      status: asset.status || ""
+      status: asset.status || "Active"
     });
     setEditId(asset._id);
   };
 
+  const filteredAssets = useMemo(() => {
+    const keyword = search.toLowerCase();
+
+    return assets.filter((asset) =>
+      [asset.name, asset.type, asset.serialNumber, asset.assignedTo, asset.status]
+        .join(" ")
+        .toLowerCase()
+        .includes(keyword)
+    );
+  }, [assets, search]);
+
+  const stats = useMemo(() => {
+    const total = assets.length;
+    const active = assets.filter((a) => a.status === "Active").length;
+    const inRepair = assets.filter((a) => a.status === "In Repair").length;
+    const unassigned = assets.filter(
+      (a) =>
+        a.status === "Unassigned" ||
+        !a.assignedTo ||
+        !a.assignedTo.trim()
+    ).length;
+
+    return { total, active, inRepair, unassigned };
+  }, [assets]);
+
   return (
     <div className="app-container">
-      <div className="card">
+      <div className="header-block">
         <h1>IT Asset Management</h1>
-        <p className="subtitle">Track and manage IT equipment efficiently.</p>
+        <p className="subtitle">
+          Track, update, and manage organizational IT equipment.
+        </p>
+      </div>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Total Assets</h3>
+          <p>{stats.total}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Active</h3>
+          <p>{stats.active}</p>
+        </div>
+        <div className="stat-card">
+          <h3>In Repair</h3>
+          <p>{stats.inRepair}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Unassigned</h3>
+          <p>{stats.unassigned}</p>
+        </div>
+      </div>
+
+      <div className="card">
+        <h2>{editId ? "Edit Asset" : "Add New Asset"}</h2>
 
         <div className="form-grid">
           <input
@@ -92,30 +160,37 @@ function App() {
             value={form.name}
             onChange={handleChange}
           />
-          <input
-            name="type"
-            placeholder="Type"
-            value={form.type}
-            onChange={handleChange}
-          />
+
+          <select name="type" value={form.type} onChange={handleChange}>
+            {assetTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+
           <input
             name="serialNumber"
             placeholder="Serial Number"
             value={form.serialNumber}
             onChange={handleChange}
           />
+
           <input
             name="assignedTo"
             placeholder="Assigned To"
             value={form.assignedTo}
             onChange={handleChange}
           />
-          <input
-            name="status"
-            placeholder="Status"
-            value={form.status}
-            onChange={handleChange}
-          />
+
+          <select name="status" value={form.status} onChange={handleChange}>
+            {assetStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+
           <button onClick={addOrUpdateAsset}>
             {editId ? "Update Asset" : "Add Asset"}
           </button>
@@ -129,7 +204,17 @@ function App() {
       </div>
 
       <div className="card">
-        <h2>Asset Inventory</h2>
+        <div className="inventory-header">
+          <h2>Asset Inventory</h2>
+          <input
+            className="search-input"
+            type="text"
+            placeholder="Search by name, serial number, type, assigned to, status"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
         <div className="table-wrapper">
           <table>
             <thead>
@@ -143,14 +228,18 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {assets.length > 0 ? (
-                assets.map((asset) => (
+              {filteredAssets.length > 0 ? (
+                filteredAssets.map((asset) => (
                   <tr key={asset._id}>
                     <td>{asset.name}</td>
                     <td>{asset.type}</td>
                     <td>{asset.serialNumber}</td>
-                    <td>{asset.assignedTo}</td>
-                    <td>{asset.status}</td>
+                    <td>{asset.assignedTo || "—"}</td>
+                    <td>
+                      <span className={`status-badge status-${asset.status.toLowerCase().replace(/\s+/g, "-")}`}>
+                        {asset.status}
+                      </span>
+                    </td>
                     <td>
                       <div className="action-buttons">
                         <button
@@ -172,7 +261,7 @@ function App() {
               ) : (
                 <tr>
                   <td colSpan="6" className="empty-state">
-                    No assets found.
+                    No matching assets found.
                   </td>
                 </tr>
               )}
