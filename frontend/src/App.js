@@ -16,6 +16,8 @@ function App() {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
+    serialNumber: "",
+    assignedTo: "",
     status: "",
   });
   const [editingId, setEditingId] = useState(null);
@@ -119,10 +121,18 @@ function App() {
       const data = await res.json();
 
       if (res.ok) {
-        setFormData({ name: "", type: "", status: "" });
+        setFormData({
+          name: "",
+          type: "",
+          serialNumber: "",
+          assignedTo: "",
+          status: "",
+        });
         setEditingId(null);
         fetchAssets();
-        setMessage(editingId ? "Asset updated successfully" : "Asset added successfully");
+        setMessage(
+          editingId ? "Asset updated successfully" : "Asset added successfully"
+        );
       } else {
         setMessage(data.message || "Operation failed");
       }
@@ -157,9 +167,11 @@ function App() {
 
   const handleEdit = (asset) => {
     setFormData({
-      name: asset.name,
-      type: asset.type,
-      status: asset.status,
+      name: asset.name || "",
+      type: asset.type || "",
+      serialNumber: asset.serialNumber || "",
+      assignedTo: asset.assignedTo || "",
+      status: asset.status || "",
     });
 
     setEditingId(asset._id);
@@ -199,15 +211,19 @@ function App() {
       border: "1px solid rgba(99, 102, 241, 0.35)",
     };
   };
-const filteredAssets = assets.filter((asset) => {
-  const query = searchTerm.toLowerCase();
 
-  return (
-    asset.name?.toLowerCase().includes(query) ||
-    asset.type?.toLowerCase().includes(query) ||
-    asset.status?.toLowerCase().includes(query)
-  );
-});
+  const filteredAssets = assets.filter((asset) => {
+    const query = searchTerm.toLowerCase();
+
+    return (
+      asset.name?.toLowerCase().includes(query) ||
+      asset.type?.toLowerCase().includes(query) ||
+      asset.serialNumber?.toLowerCase().includes(query) ||
+      asset.assignedTo?.toLowerCase().includes(query) ||
+      asset.status?.toLowerCase().includes(query)
+    );
+  });
+
   const totalAssets = filteredAssets.length;
   const activeAssets = assets.filter(
     (asset) => asset.status?.toLowerCase() === "active"
@@ -520,6 +536,34 @@ const filteredAssets = assets.filter((asset) => {
 
             <div>
               <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
+                Serial Number
+              </label>
+              <input
+                type="text"
+                name="serialNumber"
+                placeholder="e.g. SN-2026-001"
+                value={formData.serialNumber}
+                onChange={handleChange}
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
+                Assigned To
+              </label>
+              <input
+                type="text"
+                name="assignedTo"
+                placeholder="e.g. Juan Dela Cruz"
+                value={formData.assignedTo}
+                onChange={handleChange}
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", marginBottom: "8px", color: "#cbd5e1" }}>
                 Status
               </label>
               <input
@@ -543,32 +587,32 @@ const filteredAssets = assets.filter((asset) => {
 
         <div style={{ ...cardStyle, padding: "24px" }}>
           <div
-  style={{
-    marginBottom: "18px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "16px",
-    flexWrap: "wrap",
-  }}
->
-  <div>
-    <h2 style={{ margin: 0, color: "#f8fafc" }}>Assets</h2>
-    <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
-      View and manage current inventory records.
-    </p>
-  </div>
+            style={{
+              marginBottom: "18px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, color: "#f8fafc" }}>Assets</h2>
+              <p style={{ margin: "8px 0 0", color: "#94a3b8" }}>
+                View and manage current inventory records.
+              </p>
+            </div>
 
-  <div style={{ minWidth: "280px", flex: "1", maxWidth: "360px" }}>
-    <input
-      type="text"
-      placeholder="Search by name, type, or status..."
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      style={inputStyle}
-    />
-  </div>
-</div>
+            <div style={{ minWidth: "280px", flex: "1", maxWidth: "360px" }}>
+              <input
+                type="text"
+                placeholder="Search by name, type, serial, assigned user, or status..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
 
           <div style={{ overflowX: "auto" }}>
             <table
@@ -583,21 +627,28 @@ const filteredAssets = assets.filter((asset) => {
                 <tr>
                   <th style={tableHeadStyle}>Name</th>
                   <th style={tableHeadStyle}>Type</th>
+                  <th style={tableHeadStyle}>Serial Number</th>
+                  <th style={tableHeadStyle}>Assigned To</th>
                   <th style={tableHeadStyle}>Status</th>
                   <th style={tableHeadStyle}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAssets.length > 0 ? (
-  filteredAssets.map((asset, index) => (
+                  filteredAssets.map((asset, index) => (
                     <tr
                       key={asset._id}
                       style={{
-                        background: index % 2 === 0 ? "rgba(15, 23, 42, 0.55)" : "rgba(30, 41, 59, 0.4)",
+                        background:
+                          index % 2 === 0
+                            ? "rgba(15, 23, 42, 0.55)"
+                            : "rgba(30, 41, 59, 0.4)",
                       }}
                     >
                       <td style={tableCellStyle}>{asset.name}</td>
                       <td style={tableCellStyle}>{asset.type}</td>
+                      <td style={tableCellStyle}>{asset.serialNumber || "—"}</td>
+                      <td style={tableCellStyle}>{asset.assignedTo || "—"}</td>
                       <td style={tableCellStyle}>
                         <span
                           style={{
@@ -627,7 +678,7 @@ const filteredAssets = assets.filter((asset) => {
                   ))
                 ) : (
                   <tr>
-                    <td style={tableCellStyle} colSpan="4">
+                    <td style={tableCellStyle} colSpan="6">
                       No assets found
                     </td>
                   </tr>
@@ -655,4 +706,4 @@ const tableCellStyle = {
   borderBottom: "1px solid rgba(255,255,255,0.06)",
 };
 
-export default App; 
+export default App;
