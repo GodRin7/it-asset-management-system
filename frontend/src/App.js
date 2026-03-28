@@ -1103,7 +1103,9 @@ function App() {
 const [user, setUser] = useState(
   JSON.parse(localStorage.getItem("user")) || null
 );
-const [loading, setLoading] = useState(false);
+const [loginLoading, setLoginLoading] = useState(false);
+const [assetLoading, setAssetLoading] = useState(false);
+const [userLoading, setUserLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -1316,7 +1318,7 @@ useEffect(() => {
 
   const handleAddAsset = async (e) => {
     e.preventDefault();
-
+setLoading(true);
     try {
       const payload = {
         ...formData,
@@ -1354,9 +1356,12 @@ useEffect(() => {
       } else {
         pushToast(data.message || "Operation failed", "danger");
       }
-    } catch {
-      pushToast("Error saving asset", "danger");
-    }
+    } catch (error) {
+  console.error("Error saving asset:", error);
+  pushToast("Error saving asset", "danger");
+} finally {
+  setLoading(false);
+}
   };
 
   const openDeleteConfirm = (asset) => {
@@ -1865,11 +1870,16 @@ useEffect(() => {
 
                     <div className="btn-row">
                       <button
-                        type="submit"
-                        className={`btn-primary ${editingId ? "update" : ""}`}
-                      >
-                        {editingId ? "Update Asset" : "Register Asset"}
-                      </button>
+  type="submit"
+  className={`btn-primary ${editingId ? "update" : ""}`}
+  disabled={loading}
+>
+  {loading
+    ? "Saving..."
+    : editingId
+    ? "Update Asset"
+    : "Register Asset"}
+</button>
                       <button
                         type="button"
                         className="btn-light"
