@@ -118,6 +118,42 @@ const css = `
     --shadow-card: 0 1px 3px rgba(15,23,42,0.08), 0 8px 24px rgba(15,23,42,0.08);
     --shadow-glow: 0 0 30px rgba(0,120,255,0.08);
   }
+    .theme-light .topnav {
+  background: rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(15,23,42,0.08);
+}
+
+.theme-light .topnav-center {
+  color: #475569;
+}
+
+.theme-light .brand-name {
+  color: #0F172A;
+}
+
+.theme-light .nav-user {
+  background: #F8FAFD;
+  border-color: rgba(15,23,42,0.12);
+  color: #334155;
+}
+
+.theme-light .nav-user strong {
+  color: #0F172A;
+}
+
+.theme-light .btn-theme,
+.theme-light .btn-logout {
+  color: #334155;
+  border-color: rgba(15,23,42,0.12);
+  background: transparent;
+}
+
+.theme-light .btn-theme:hover,
+.theme-light .btn-logout:hover {
+  color: #0F172A;
+  border-color: rgba(15,23,42,0.18);
+  background: rgba(15,23,42,0.04);
+}
   }
 
   html, body { height: 100%; background: var(--bg-void); }
@@ -179,12 +215,12 @@ const css = `
   .brand-name span { color: var(--accent-blue); }
 
   .topnav-center {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-soft);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
   .nav-badge {
     display: flex;
