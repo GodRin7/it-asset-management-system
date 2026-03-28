@@ -192,6 +192,9 @@ const css = `
     align-items: center;
     gap: 12px;
   }
+    .topnav-right {
+  gap: 8px;
+}
 
   .brand-icon {
     width: 28px;
@@ -709,7 +712,94 @@ const css = `
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+  .mobile-asset-list {
+  display: none;
+}
 
+.asset-mobile-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.asset-mobile-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.asset-mobile-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.asset-mobile-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.asset-mobile-field {
+  display: grid;
+  gap: 4px;
+}
+
+.asset-mobile-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.asset-mobile-value {
+  color: var(--text-secondary);
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.asset-mobile-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .desktop-asset-table {
+    display: none;
+  }
+
+  .mobile-asset-list {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .asset-mobile-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .asset-mobile-actions {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .table-wrap {
+    border-radius: 12px;
+    border: 1px solid var(--border-dim);
+  }
+}
   table {
     width: 100%;
     border-collapse: collapse;
@@ -1174,7 +1264,7 @@ const css = `
     .page-shell { padding: 20px 16px 0; }
     .topnav { padding: 0 14px; }
   }
-    @media (max-width: 768px) {
+  @media (max-width: 768px) {
   .topnav {
     height: auto;
     padding: 10px 12px;
@@ -1213,35 +1303,193 @@ const css = `
     width: 100%;
   }
 
-  th, td {
+  th,
+  td {
     font-size: 12px;
     padding: 10px;
   }
 
-  .td-actions {
-    flex-wrap: wrap;
+  th:nth-child(4),
+  td:nth-child(4),
+  th:nth-child(5),
+  td:nth-child(5),
+  th:nth-child(6),
+  td:nth-child(6) {
+    display: none;
   }
 
-  .btn-edit, .btn-del, .btn-view {
+  .td-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .btn-edit,
+  .btn-del,
+  .btn-view {
     width: 100%;
+    min-height: 38px;
     text-align: center;
   }
 }
   @media (max-width: 480px) {
   .topnav-center {
-  display: none;
-}
-  .brand-name,
-  .topnav-center {
     display: none;
   }
 
+  .brand-name {
+    display: block;
+   font-size: 13px;
+  letter-spacing: 0.02em;
+  }
+
+  .topnav {
+    padding: 10px 12px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .topnav-brand {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+ .topnav-right {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+  .nav-badge {
+  grid-column: 1 / -1;
+  justify-self: flex-end;
+}
+
+.nav-user {
+  grid-column: 1 / -1;
+}
+
+  .nav-badge {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .nav-user {
+    min-width: 0;
+    width: 100%;
+    font-size: 11px;
+    padding: 8px 10px;
+    overflow: hidden;
+  }
+
+  .nav-user strong {
+  display: inline-block;
+  max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .btn-theme,
+  .btn-logout {
+    width: 100%;
+    min-height: 44px;
+    font-size: 13px;
+  }
+.btn-theme,
+.btn-logout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+  .page-shell {
+    padding: 14px 12px 0;
+  }
+
+  .page-header {
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+
+  .page-eyebrow {
+    font-size: 9px;
+    margin-bottom: 6px;
+  }
+
   .page-title {
-    font-size: 20px;
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  .page-sub {
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .stat-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .stat-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    margin-bottom: 4px;
+  }
+
+  .stat-sub {
+    font-size: 12px;
+  }
+
+  .panel-header {
+    padding: 14px 14px 12px;
+  }
+
+  .panel-body {
+    padding: 14px;
+  }
+
+  .panel-title {
+    font-size: 14px;
+  }
+
+  .panel-sub {
+    font-size: 11px;
+  }
+
+  .panel {
+    border-radius: 18px;
+  }
+
+  .pills-row {
+    gap: 6px;
+  }
+
+  .pill {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+
+  .btn-reset {
+    min-height: 38px;
+  }
+
+  .search-input,
+  .filter-select,
+  .form-input,
+  .text-area {
+    min-height: 46px;
+    font-size: 13px;
+  }
+
+  .toolbar-row {
+    gap: 8px;
   }
 
   .login-card {
@@ -2170,8 +2418,8 @@ if (res.status === 401) {
                   </div>
                 </div>
 
-                <div className="table-wrap">
-                  <table>
+                <div className="table-wrap desktop-asset-table">
+                <table>
                     <thead>
                       <tr>
                         <th>Name</th>
@@ -2264,6 +2512,91 @@ if (res.status === 401) {
                       )}
                     </tbody>
                   </table>
+                  <div className="mobile-asset-list">
+  {paginatedAssets.length > 0 ? (
+    paginatedAssets.map((asset) => {
+      const s = getStatusStyle(asset.status);
+      return (
+        <div className="asset-mobile-card" key={asset._id}>
+          <div className="asset-mobile-top">
+            <div className="asset-mobile-name">
+              <span className="type-icon">{TYPE_ICONS[asset.type] || "📦"}</span>
+              <div>{asset.name}</div>
+            </div>
+
+            <span
+              className="status-badge"
+              style={{
+                color: s.color,
+                background: s.background,
+                borderColor: s.borderColor,
+              }}
+            >
+              <span
+                className="status-dot"
+                style={{ background: s.dotColor }}
+              ></span>
+              {asset.status}
+            </span>
+          </div>
+
+          <div className="asset-mobile-meta">
+            <div className="asset-mobile-field">
+              <div className="asset-mobile-label">Asset Tag</div>
+              <div className="asset-mobile-value">{asset.assetTag || "—"}</div>
+            </div>
+
+            <div className="asset-mobile-field">
+              <div className="asset-mobile-label">Type</div>
+              <div className="asset-mobile-value">{asset.type || "—"}</div>
+            </div>
+
+            <div className="asset-mobile-field">
+              <div className="asset-mobile-label">Serial No.</div>
+              <div className="asset-mobile-value">{asset.serialNumber || "—"}</div>
+            </div>
+
+            <div className="asset-mobile-field">
+              <div className="asset-mobile-label">Assigned To</div>
+              <div className="asset-mobile-value">{asset.assignedTo || "—"}</div>
+            </div>
+
+            <div className="asset-mobile-field">
+              <div className="asset-mobile-label">Department</div>
+              <div className="asset-mobile-value">{asset.department || "—"}</div>
+            </div>
+          </div>
+
+          <div className="asset-mobile-actions">
+            <button
+              className="btn-view"
+              onClick={() => setSelectedAsset(asset)}
+            >
+              View
+            </button>
+            <button
+              className="btn-edit"
+              onClick={() => handleEdit(asset)}
+            >
+              Edit
+            </button>
+            <button
+              className="btn-del"
+              onClick={() => openDeleteConfirm(asset)}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      );
+    })
+  ) : (
+    <div className="empty-state">
+      <div className="empty-icon">📭</div>
+      No assets match the current filters.
+    </div>
+  )}
+</div>
                 </div>
 
                 <div className="pagination">
