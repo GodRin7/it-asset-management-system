@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
+const API_BASE = "https://it-asset-backend-blaa.onrender.com";
+fetch(`${API_BASE}/users`)
+fetch(`${API_BASE}/assets`)
 
-const API_URL = "http://localhost:5000";
+
+const API_URL = "https://it-asset-backend-blaa.onrender.com";
 
 const STATUS_OPTIONS = ["Active", "In Repair", "Unassigned", "Retired"];
 const TYPE_OPTIONS = [
@@ -1177,7 +1181,7 @@ const fetchActivityLogs = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/activity-logs", {
+    const res = await fetch("https://it-asset-backend-blaa.onrender.com/activity-logs", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -1224,7 +1228,7 @@ const fetchActivityLogs = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/users", {
+    const res = await fetch("https://it-asset-backend-blaa.onrender.com/users", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -1415,7 +1419,7 @@ useEffect(() => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:5000/users", {
+    const res = await fetch("https://it-asset-backend-blaa.onrender.com/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
