@@ -1,7 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-const API_BASE = "https://it-asset-backend-blaa.onrender.com";
-fetch(`${API_BASE}/users`)
-fetch(`${API_BASE}/assets`)
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
 
 
 const API_URL = "https://it-asset-backend-blaa.onrender.com";
@@ -1145,12 +1143,13 @@ const [activityLogs, setActivityLogs] = useState([]);
  const [users, setUsers] = useState([]);
 
   const [userForm, setUserForm] = useState({
-    name: "",
-    email: "",
-    role: "staff",
-    department: "ICT Office",
-    status: "Active",
-  });
+  name: "",
+  email: "",
+  password: "",
+  role: "staff",
+  department: "ICT Office",
+  status: "active",
+});
 
   const pushToast = (text, type = "success") => {
     const id = Date.now() + Math.random();
@@ -1161,10 +1160,10 @@ const [activityLogs, setActivityLogs] = useState([]);
   };
 
 
-  const generateAssetTag = () => {
-    const next = assets.length + 1;
-    return `NXS-${String(next).padStart(4, "0")}`;
-  };
+  const generateAssetTag = useCallback(() => {
+  const next = assets.length + 1;
+  return `NXS-${String(next).padStart(4, "0")}`;
+}, [assets.length]);
   const formatActivityTitle = (action) => {
   switch (action) {
     case "CREATE_ASSET":
@@ -1175,20 +1174,18 @@ const [activityLogs, setActivityLogs] = useState([]);
       return "Asset removed";
     default:
       return action;
+      
   }
 };
-const fetchActivityLogs = async () => {
+const fetchActivityLogs = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("https://it-asset-backend-blaa.onrender.com/activity-logs", {
+    const res = await fetch(`${API_URL}/activity-logs`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      
     });
-  
-
 
     if (!res.ok) {
       throw new Error("Failed to fetch activity logs");
@@ -1199,36 +1196,36 @@ const fetchActivityLogs = async () => {
   } catch (error) {
     console.error("Failed to fetch activity logs:", error);
   }
-};
-  const fetchAssets = async () => {
-    try {
-      const res = await fetch(`${API_URL}/assets`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+}, []);
+  const fetchAssets = useCallback(async () => {
+  try {
+    const res = await fetch(`${API_URL}/assets`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (res.ok) {
-        setAssets(
-          data.map((asset, index) => ({
-            ...asset,
-            assetTag: asset.assetTag || `NXS-${String(index + 1).padStart(4, "0")}`,
-            department: asset.department || "ICT Office",
-            notes: asset.notes || "",
-          }))
-        );
-      } else {
-        pushToast(data.message || "Failed to fetch assets", "danger");
-      }
-    } catch {
-      pushToast("Error fetching assets", "danger");
+    if (res.ok) {
+      setAssets(
+        data.map((asset, index) => ({
+          ...asset,
+          assetTag: asset.assetTag || `NXS-${String(index + 1).padStart(4, "0")}`,
+          department: asset.department || "ICT Office",
+          notes: asset.notes || "",
+        }))
+      );
+    } else {
+      pushToast(data.message || "Failed to fetch assets", "danger");
     }
-  };
-  const fetchUsers = async () => {
+  } catch {
+    pushToast("Error fetching assets", "danger");
+  }
+}, [token]);
+  const fetchUsers = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("https://it-asset-backend-blaa.onrender.com/users", {
+    const res = await fetch(`${API_URL}/users`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -1241,13 +1238,13 @@ const fetchActivityLogs = async () => {
   } catch (error) {
     console.error("Error fetching users:", error);
   }
-};
+}, []);
 
 useEffect(() => {
   fetchAssets();
   fetchActivityLogs();
   fetchUsers();
-}, []);
+}, [fetchAssets, fetchActivityLogs, fetchUsers]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1304,11 +1301,11 @@ useEffect(() => {
     setEditingId(null);
   };
 
-  useEffect(() => {
-    if (token && !editingId && !formData.assetTag) {
-      setFormData((prev) => ({ ...prev, assetTag: generateAssetTag() }));
-    }
-  }, [assets.length, token]);
+useEffect(() => {
+  if (token && !editingId && !formData.assetTag) {
+    setFormData((prev) => ({ ...prev, assetTag: generateAssetTag() }));
+  }
+}, [assets.length, token, editingId, formData.assetTag, generateAssetTag]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -1419,7 +1416,7 @@ useEffect(() => {
   try {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("https://it-asset-backend-blaa.onrender.com/users", {
+   const res = await fetch(`${API_URL}/users`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1447,14 +1444,14 @@ useEffect(() => {
       email: "",
       password: "",
       role: "staff",
-      department: "",
+      department: "ICT Office",
       status: "active",
     });
 
     fetchUsers();
   } catch (error) {
     console.error(error);
-    pushToast(error.message, "error");
+    pushToast(error.message, "danger");
   }
 };
 
@@ -2201,6 +2198,18 @@ useEffect(() => {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Email</label>
+                      <div className="form-group">
+  <label className="form-label">Password</label>
+  <input
+    className="form-input"
+    name="password"
+    type="password"
+    value={userForm.password}
+    onChange={handleUserChange}
+    placeholder="Enter temporary password"
+    required
+  />
+</div>
                       <input
                         className="form-input"
                         name="email"
@@ -2232,8 +2241,8 @@ useEffect(() => {
                           value={userForm.status}
                           onChange={handleUserChange}
                         >
-                          <option value="Active">Active</option>
-                          <option value="Inactive">Inactive</option>
+                          <option value="active">Active</option>
+<option value="inactive">Inactive</option>
                         </select>
                       </div>
                     </div>
@@ -2259,12 +2268,13 @@ useEffect(() => {
                         type="button"
                         onClick={() =>
                           setUserForm({
-                            name: "",
-                            email: "",
-                            role: "staff",
-                            department: "ICT Office",
-                            status: "Active",
-                          })
+  name: "",
+  email: "",
+  password: "",
+  role: "staff",
+  department: "ICT Office",
+  status: "active",
+})
                         }
                       >
                         Clear
@@ -2294,7 +2304,7 @@ useEffect(() => {
                     </thead>
                     <tbody>
                       {users.map((u) => (
-                        <tr key={u.id}>
+                        <tr key={u._id}>
                           <td>
                             <div className="td-name">👤 {u.name}</div>
                           </td>
