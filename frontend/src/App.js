@@ -97,6 +97,27 @@ const css = `
     --shadow-card: 0 1px 3px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.4);
     --shadow-glow: 0 0 40px rgba(0,120,255,0.08);
     --transition: 0.18s cubic-bezier(0.4,0,0.2,1);
+}
+
+.theme-light {
+    --bg-void: #F4F7FB;
+    --bg-base: #EEF3F9;
+    --bg-surface: #FFFFFF;
+    --bg-raised: #F8FAFD;
+    --bg-overlay: #E8EEF7;
+    --border-dim: rgba(15,23,42,0.08);
+    --border-mid: rgba(15,23,42,0.12);
+    --border-strong: rgba(15,23,42,0.18);
+    --accent-blue: #0078FF;
+    --accent-cyan: #00AEEF;
+    --accent-green: #00B67A;
+    --text-primary: #0F172A;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+    --text-soft: #94A3B8;
+    --shadow-card: 0 1px 3px rgba(15,23,42,0.08), 0 8px 24px rgba(15,23,42,0.08);
+    --shadow-glow: 0 0 30px rgba(0,120,255,0.08);
+  }
   }
 
   html, body { height: 100%; background: var(--bg-void); }
@@ -104,6 +125,7 @@ const css = `
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
 
   .ams-root {
+  transition: background 0.3s ease, color 0.3s ease;
     min-height: 100vh;
     background: var(--bg-void);
     background-image:
@@ -218,6 +240,23 @@ const css = `
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
+  }
+      .btn-theme {
+    padding: 6px 14px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border-mid);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+
+  .btn-theme:hover {
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.04);
   }
 
   .btn-logout:hover {
@@ -630,7 +669,10 @@ const css = `
     cursor: pointer;
   }
 
-  .table-wrap { overflow-x: auto; }
+  .table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
   table {
     width: 100%;
@@ -1096,19 +1138,95 @@ const css = `
     .page-shell { padding: 20px 16px 0; }
     .topnav { padding: 0 14px; }
   }
+    @media (max-width: 768px) {
+  .topnav {
+    height: auto;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topnav-right {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-two-col,
+  .btn-row {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .details-drawer {
+    width: 100%;
+  }
+
+  th, td {
+    font-size: 12px;
+    padding: 10px;
+  }
+
+  .td-actions {
+    flex-wrap: wrap;
+  }
+
+  .btn-edit, .btn-del, .btn-view {
+    width: 100%;
+    text-align: center;
+  }
+}
+  @media (max-width: 480px) {
+  .brand-name,
+  .topnav-center {
+    display: none;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-card {
+    padding: 24px 18px;
+  }
+}
 `;
 
 function App() {
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [token, setToken] = useState(localStorage.getItem("token") || "");
 const [user, setUser] = useState(
   JSON.parse(localStorage.getItem("user")) || null
 );
+
 
 const [loginLoading, setLoginLoading] = useState(false);
 const [assetLoading, setAssetLoading] = useState(false);
 const [userLoading, setUserLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  useEffect(() => {
+  localStorage.setItem("theme", theme);
+}, [theme]);
 
   const [assets, setAssets] = useState([]);
   const [activeView, setActiveView] = useState("assets");
@@ -1636,7 +1754,7 @@ if (res.status === 401) {
   return (
     <>
       <style>{css}</style>
-      <div className="ams-root">
+      <div className={`ams-root ${theme === "light" ? "theme-light" : "theme-dark"}`}>
         <nav className="topnav">
           <div className="topnav-brand">
             <div className="brand-icon">⬡</div>
@@ -1658,7 +1776,14 @@ if (res.status === 401) {
               <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
                 / {user?.role}
               </span>
-            </div>
+              </div>
+              
+              <button
+           className="btn-theme"
+  onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+>
+  {theme === "dark" ? "☀ Light" : "🌙 Dark"}
+</button>
             <button className="btn-logout" onClick={handleLogout}>
               Sign Out
             </button>
