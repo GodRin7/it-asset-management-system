@@ -1228,6 +1228,9 @@ const css = `
   }
 }
   @media (max-width: 480px) {
+  .topnav-center {
+  display: none;
+}
   .brand-name,
   .topnav-center {
     display: none;
