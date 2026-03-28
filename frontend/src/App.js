@@ -1103,6 +1103,7 @@ function App() {
 const [user, setUser] = useState(
   JSON.parse(localStorage.getItem("user")) || null
 );
+
 const [loginLoading, setLoginLoading] = useState(false);
 const [assetLoading, setAssetLoading] = useState(false);
 const [userLoading, setUserLoading] = useState(false);
@@ -1254,7 +1255,7 @@ useEffect(() => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-setLoading(true);
+setLoginLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -1279,7 +1280,7 @@ setLoading(true);
     } catch {
   pushToast("Server error during login", "danger");
 } finally {
-  setLoading(false);
+  setLoginLoading(false);
 }
   };
 
@@ -1318,7 +1319,7 @@ useEffect(() => {
 
   const handleAddAsset = async (e) => {
     e.preventDefault();
-setLoading(true);
+setAssetLoading(true);
     try {
       const payload = {
         ...formData,
@@ -1360,7 +1361,7 @@ setLoading(true);
   console.error("Error saving asset:", error);
   pushToast("Error saving asset", "danger");
 } finally {
-  setLoading(false);
+  setAssetLoading(false);
 }
   };
 
@@ -1572,7 +1573,7 @@ setLoading(true);
                 <input
                   className="form-input"
                   type="email"
-                  disabled={loading}
+                  disabled={loginLoading}
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -1584,7 +1585,7 @@ setLoading(true);
                 <input
                   className="form-input"
                   type="password"
-                  disabled={loading}
+                  disabled={loginLoading}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -1594,9 +1595,9 @@ setLoading(true);
               <button
   type="submit"
   className="login-btn"
-  disabled={loading}
+  disabled={loginLoading}
 >
-  {loading ? "Signing in..." : "Sign In"}
+  {loginLoading ? "Signing in..." : "Sign In"}
 </button>
                 
             </form>
@@ -1872,9 +1873,9 @@ setLoading(true);
                       <button
   type="submit"
   className={`btn-primary ${editingId ? "update" : ""}`}
-  disabled={loading}
+  disabled={loginLoading}
 >
-  {loading
+  {assetLoading
     ? "Saving..."
     : editingId
     ? "Update Asset"
