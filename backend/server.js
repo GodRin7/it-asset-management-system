@@ -1,3 +1,4 @@
+const userRoutes = require("./routes/userRoutes");
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -6,6 +7,7 @@ const cors = require("cors");
 const assetRoutes = require("./routes/assetRoutes");
 const authRoutes = require("./routes/authRoutes");
 const activityLogRoutes = require("./routes/activityLogRoutes");
+
 
 const app = express();
 
@@ -17,6 +19,7 @@ app.use(express.json());
 app.use("/assets", assetRoutes);
 app.use("/auth", authRoutes);
 app.use("/activity-logs", activityLogRoutes);
+app.use("/users", userRoutes);
 
 // Root test route
 app.get("/", (req, res) => {

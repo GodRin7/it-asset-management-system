@@ -1138,24 +1138,7 @@ const [activityLogs, setActivityLogs] = useState([]);
   const [toasts, setToasts] = useState([]);
   
 
-  const [users, setUsers] = useState([
-    {
-      id: "u-001",
-      name: "System Administrator",
-      email: user?.email || "admin@example.com",
-      role: user?.role || "admin",
-      department: "ICT Office",
-      status: "Active",
-    },
-    {
-      id: "u-002",
-      name: "Network Support",
-      email: "network.support@nexusit.local",
-      role: "staff",
-      department: "Network Operations",
-      status: "Active",
-    },
-  ]);
+ const [users, setUsers] = useState([]);
 
   const [userForm, setUserForm] = useState({
     name: "",
@@ -1237,11 +1220,29 @@ const fetchActivityLogs = async () => {
       pushToast("Error fetching assets", "danger");
     }
   };
+  const fetchUsers = async () => {
+  try {
+    const token = localStorage.getItem("token");
 
- useEffect(() => {
+    const res = await fetch("http://localhost:5000/users", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch users");
+
+    const data = await res.json();
+    setUsers(data);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+  }
+};
+
+useEffect(() => {
   fetchAssets();
   fetchActivityLogs();
-  
+  fetchUsers();
 }, []);
 
   useEffect(() => {
@@ -1408,22 +1409,50 @@ const fetchActivityLogs = async () => {
     setUserForm({ ...userForm, [e.target.name]: e.target.value });
   };
 
-  const handleCreateUser = (e) => {
-    e.preventDefault();
-    const newUser = {
-      id: `u-${String(users.length + 1).padStart(3, "0")}`,
-      ...userForm,
-    };
-    setUsers((prev) => [newUser, ...prev]);
-    pushToast("User profile added to admin panel", "success");
+  const handleCreateUser = async (e) => {
+  e.preventDefault();
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://localhost:5000/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name: userForm.name,
+        email: userForm.email,
+        password: userForm.password,
+        role: userForm.role,
+        department: userForm.department,
+        status: userForm.status,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || "Failed to create user");
+    }
+
+    pushToast("User created successfully", "success");
+
     setUserForm({
       name: "",
       email: "",
+      password: "",
       role: "staff",
-      department: "ICT Office",
-      status: "Active",
+      department: "",
+      status: "active",
     });
-  };
+
+    fetchUsers();
+  } catch (error) {
+    console.error(error);
+    pushToast(error.message, "error");
+  }
+};
 
   const filteredAssets = useMemo(() => {
     let result = assets.filter((a) => {
