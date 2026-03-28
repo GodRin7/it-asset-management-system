@@ -154,7 +154,7 @@ const css = `
   border-color: rgba(15,23,42,0.18);
   background: rgba(15,23,42,0.04);
 }
-  }
+  
 
   html, body { height: 100%; background: var(--bg-void); }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -1257,7 +1257,6 @@ const [user, setUser] = useState(
 
 const [loginLoading, setLoginLoading] = useState(false);
 const [assetLoading, setAssetLoading] = useState(false);
-const [userLoading, setUserLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   useEffect(() => {
@@ -1334,6 +1333,19 @@ const [activityLogs, setActivityLogs] = useState([]);
       
   }
 };
+const handleLogout = useCallback(() => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  setToken("");
+  setUser(null);
+  setAssets([]);
+  setSelectedAsset(null);
+  
+}, []);
+const handleUnauthorized = useCallback(() => {
+  handleLogout();
+  alert("Session expired. Please sign in again.");
+}, [handleLogout]);
 const fetchActivityLogs = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
@@ -1356,7 +1368,7 @@ if (res.status === 401) {
   } catch (error) {
     console.error("Failed to fetch activity logs:", error);
   }
-}, []);
+}, [handleUnauthorized]);
   const fetchAssets = useCallback(async () => {
   try {
     const res = await fetch(`${API_URL}/assets`, {
@@ -1383,7 +1395,7 @@ if (res.status === 401) {
   } catch {
     pushToast("Error fetching assets", "danger");
   }
-}, [token]);
+}, [token, handleUnauthorized]);
   const fetchUsers = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
@@ -1404,7 +1416,7 @@ if (res.status === 401) {
   } catch (error) {
     console.error("Error fetching users:", error);
   }
-}, []);
+}, [handleUnauthorized]);
 
 useEffect(() => {
   fetchAssets();
@@ -1447,19 +1459,8 @@ setLoginLoading(true);
 }
   };
 
-  const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  setToken("");
-  setUser(null);
-  setAssets([]);
-  setSelectedAsset(null);
-};
+ 
 
-const handleUnauthorized = () => {
-  pushToast("Session expired. Please sign in again.", "warning");
-  handleLogout();
-};
 
   const resetForm = () => {
     setFormData({
@@ -2402,8 +2403,19 @@ if (res.status === 401) {
                       />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Email</label>
-                      <div className="form-group">
+  <label className="form-label">Email</label>
+  <input
+    className="form-input"
+    name="email"
+    type="email"
+    value={userForm.email}
+    onChange={handleUserChange}
+    placeholder="e.g. staff@nexusit.local"
+    required
+  />
+</div>
+
+<div className="form-group">
   <label className="form-label">Password</label>
   <input
     className="form-input"
@@ -2415,16 +2427,6 @@ if (res.status === 401) {
     required
   />
 </div>
-                      <input
-                        className="form-input"
-                        name="email"
-                        type="email"
-                        value={userForm.email}
-                        onChange={handleUserChange}
-                        placeholder="e.g. staff@nexusit.local"
-                        required
-                      />
-                    </div>
                     <div className="form-two-col">
                       <div className="form-group">
                         <label className="form-label">Role</label>
