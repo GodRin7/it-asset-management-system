@@ -1189,7 +1189,10 @@ const fetchActivityLogs = useCallback(async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
     if (!res.ok) {
       throw new Error("Failed to fetch activity logs");
     }
@@ -1205,7 +1208,10 @@ const fetchActivityLogs = useCallback(async () => {
     const res = await fetch(`${API_URL}/assets`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
     const data = await res.json();
 
     if (res.ok) {
@@ -1233,7 +1239,10 @@ const fetchActivityLogs = useCallback(async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
     if (!res.ok) throw new Error("Failed to fetch users");
 
     const data = await res.json();
@@ -1285,13 +1294,18 @@ setLoginLoading(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setToken("");
-    setUser(null);
-    setAssets([]);
-    setSelectedAsset(null);
-  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  setToken("");
+  setUser(null);
+  setAssets([]);
+  setSelectedAsset(null);
+};
+
+const handleUnauthorized = () => {
+  pushToast("Session expired. Please sign in again.", "warning");
+  handleLogout();
+};
 
   const resetForm = () => {
     setFormData({
@@ -1339,7 +1353,10 @@ setAssetLoading(true);
         },
         body: JSON.stringify(payload),
       });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
       const data = await res.json();
 
       if (res.ok) {
@@ -1376,7 +1393,10 @@ setAssetLoading(true);
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
           const data = await res.json();
 
           if (res.ok) {
@@ -1440,7 +1460,10 @@ setAssetLoading(true);
         status: userForm.status,
       }),
     });
-
+if (res.status === 401) {
+  handleUnauthorized();
+  return;
+}
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.message || "Failed to create user");
@@ -1873,7 +1896,7 @@ setAssetLoading(true);
                       <button
   type="submit"
   className={`btn-primary ${editingId ? "update" : ""}`}
-  disabled={loginLoading}
+  disabled={assetLoading}
 >
   {assetLoading
     ? "Saving..."
