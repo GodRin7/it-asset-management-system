@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 
 
-const API_URL = "https://it-asset-backend-blaa.onrender.com";
+const API_URL = process.env.REACT_APP_API_URL;
 
 const STATUS_OPTIONS = ["Active", "In Repair", "Unassigned", "Retired"];
 const TYPE_OPTIONS = [
@@ -1100,10 +1100,10 @@ const css = `
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || null
-  );
-
+const [user, setUser] = useState(
+  JSON.parse(localStorage.getItem("user")) || null
+);
+const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -1252,6 +1252,7 @@ useEffect(() => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+setLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
@@ -1274,8 +1275,10 @@ useEffect(() => {
         pushToast(data.message || "Login failed", "danger");
       }
     } catch {
-      pushToast("Server error during login", "danger");
-    }
+  pushToast("Server error during login", "danger");
+} finally {
+  setLoading(false);
+}
   };
 
   const handleLogout = () => {
@@ -1564,6 +1567,7 @@ useEffect(() => {
                 <input
                   className="form-input"
                   type="email"
+                  disabled={loading}
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -1575,15 +1579,21 @@ useEffect(() => {
                 <input
                   className="form-input"
                   type="password"
+                  disabled={loading}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-              <button type="submit" className="login-btn">
-                Sign In
-              </button>
+              <button
+  type="submit"
+  className="login-btn"
+  disabled={loading}
+>
+  {loading ? "Signing in..." : "Sign In"}
+</button>
+                
             </form>
             {toasts.length > 0 && (
               <div className="login-msg">{toasts[toasts.length - 1].text}</div>
