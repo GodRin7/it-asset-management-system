@@ -1510,6 +1510,9 @@ const [loginLoading, setLoginLoading] = useState(false);
 const [assetLoading, setAssetLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [name, setName] = useState("");
+  const [registerDepartment, setRegisterDepartment] = useState("ICT Office");
   useEffect(() => {
   localStorage.setItem("theme", theme);
 }, [theme]);
@@ -1595,8 +1598,9 @@ const handleLogout = useCallback(() => {
 }, []);
 const handleUnauthorized = useCallback(() => {
   handleLogout();
-  alert("Session expired. Please sign in again.");
-}, [handleLogout]);
+  pushToast("Session expired. Please sign in again.", "danger");
+}, [handleLogout, pushToast]);
+
 const fetchActivityLogs = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
@@ -1708,6 +1712,38 @@ setLoginLoading(true);
 } finally {
   setLoginLoading(false);
 }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name, department: registerDepartment }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setToken(data.token);
+        setUser(data.user);
+        setEmail("");
+        setPassword("");
+        setName("");
+        pushToast("Registration and authentication successful", "success");
+      } else {
+        pushToast(data.message || "Registration failed", "danger");
+      }
+    } catch {
+      pushToast("Server error during registration", "danger");
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
  
@@ -1992,11 +2028,46 @@ if (res.status === 401) {
               </div>
             </div>
             <div className="login-eyebrow">Secure Access Portal</div>
-            <div className="login-title">Asset Control</div>
+            <div className="login-title">{isRegistering ? "Create Account" : "Asset Control"}</div>
             <div className="login-desc">
-              Authenticate to access the enterprise IT asset operations platform.
+              {isRegistering 
+                ? "Join the enterprise IT asset operations platform."
+                : "Authenticate to access the enterprise IT asset operations platform."}
             </div>
-            <form onSubmit={handleLogin}>
+
+            <form onSubmit={isRegistering ? handleRegister : handleLogin}>
+              {isRegistering && (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Full Name</label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      disabled={loginLoading}
+                      placeholder="Juan Dela Cruz"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required={isRegistering}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Department</label>
+                    <select
+                      className="form-input"
+                      value={registerDepartment}
+                      disabled={loginLoading}
+                      onChange={(e) => setRegisterDepartment(e.target.value)}
+                    >
+                      {DEPARTMENT_OPTIONS.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              
               <div className="form-group">
                 <label className="form-label">Email Address</label>
                 <input
@@ -2021,15 +2092,33 @@ if (res.status === 401) {
                   required
                 />
               </div>
+
               <button
-  type="submit"
-  className="login-btn"
-  disabled={loginLoading}
->
-  {loginLoading ? "Signing in..." : "Sign In"}
-</button>
-                
+                type="submit"
+                className="login-btn"
+                disabled={loginLoading}
+              >
+                {loginLoading 
+                  ? (isRegistering ? "Creating account..." : "Signing in...") 
+                  : (isRegistering ? "Sign Up" : "Sign In")}
+              </button>
             </form>
+
+            <div style={{ marginTop: "20px", textAlign: "center" }}>
+              <button
+                className="btn-light"
+                style={{ border: "none", background: "none", fontSize: "12px", cursor: "pointer" }}
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  pushToast(isRegistering ? "Switching to login" : "Switching to registration", "warning");
+                }}
+              >
+                {isRegistering 
+                  ? "Already have an account? Sign In" 
+                  : "Need an account? Sign Up"}
+              </button>
+            </div>
+
             {toasts.length > 0 && (
               <div className="login-msg">{toasts[toasts.length - 1].text}</div>
             )}
