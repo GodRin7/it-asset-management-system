@@ -1563,32 +1563,31 @@ const [activityLogs, setActivityLogs] = useState([]);
 
   const [editingUserId, setEditingUserId] = useState(null);
 
-  const pushToast = (text, type = "success") => {
+  const pushToast = useCallback((text, type = "success") => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, text, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3500);
-  };
+  }, []);
 
 
   const generateAssetTag = useCallback(() => {
   const next = assets.length + 1;
   return `NXS-${String(next).padStart(4, "0")}`;
 }, [assets.length]);
-  const formatActivityTitle = (action) => {
-  switch (action) {
-    case "CREATE_ASSET":
-      return "Asset registered";
-    case "UPDATE_ASSET":
-      return "Asset updated";
-    case "DELETE_ASSET":
-      return "Asset removed";
-    default:
-      return action;
-      
-  }
-};
+  const formatActivityTitle = useCallback((action) => {
+    switch (action) {
+      case "CREATE_ASSET":
+        return "Asset registered";
+      case "UPDATE_ASSET":
+        return "Asset updated";
+      case "DELETE_ASSET":
+        return "Asset removed";
+      default:
+        return action;
+    }
+  }, []);
 const handleLogout = useCallback(() => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
