@@ -1654,7 +1654,7 @@ if (res.status === 401) {
   } catch {
     pushToast("Error fetching assets", "danger");
   }
-}, [token, handleUnauthorized]);
+}, [token, handleUnauthorized, pushToast]);
   const fetchUsers = useCallback(async () => {
   try {
     const token = localStorage.getItem("token");
