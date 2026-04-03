@@ -1561,6 +1561,8 @@ const [activityLogs, setActivityLogs] = useState([]);
   status: "active",
 });
 
+  const [editingUserId, setEditingUserId] = useState(null);
+
   const pushToast = (text, type = "success") => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, text, type }]);
@@ -1597,8 +1599,11 @@ const handleLogout = useCallback(() => {
   
 }, []);
 const handleUnauthorized = useCallback(() => {
+  const currentToken = localStorage.getItem("token");
   handleLogout();
-  pushToast("Session expired. Please sign in again.", "danger");
+  if (currentToken) {
+    pushToast("Session expired. Please sign in again.", "danger");
+  }
 }, [handleLogout, pushToast]);
 
 const fetchActivityLogs = useCallback(async () => {
@@ -1674,10 +1679,12 @@ if (res.status === 401) {
 }, [handleUnauthorized]);
 
 useEffect(() => {
-  fetchAssets();
-  fetchActivityLogs();
-  fetchUsers();
-}, [fetchAssets, fetchActivityLogs, fetchUsers]);
+  if (token) {
+    fetchAssets();
+    fetchActivityLogs();
+    fetchUsers();
+  }
+}, [token, fetchAssets, fetchActivityLogs, fetchUsers]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -1887,8 +1894,14 @@ if (res.status === 401) {
   try {
     const token = localStorage.getItem("token");
 
-   const res = await fetch(`${API_URL}/users`, {
-      method: "POST",
+    const url = editingUserId 
+      ? `${API_URL}/users/${editingUserId}`
+      : `${API_URL}/users`;
+    
+    const method = editingUserId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -1908,10 +1921,10 @@ if (res.status === 401) {
 }
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(err.message || "Failed to create user");
+      throw new Error(err.message || `Failed to ${editingUserId ? "update" : "create"} user`);
     }
 
-    pushToast("User created successfully", "success");
+    pushToast(`User ${editingUserId ? "updated" : "created"} successfully`, "success");
 
     setUserForm({
       name: "",
@@ -1921,6 +1934,7 @@ if (res.status === 401) {
       department: "ICT Office",
       status: "active",
     });
+    setEditingUserId(null);
 
     fetchUsers();
   } catch (error) {
@@ -1928,6 +1942,51 @@ if (res.status === 401) {
     pushToast(error.message, "danger");
   }
 };
+
+  const handleEditUser = (u) => {
+    setUserForm({
+      name: u.name,
+      email: u.email,
+      password: "", // Don't show hashed password
+      role: u.role,
+      department: u.department,
+      status: u.status?.toLowerCase() || "active",
+    });
+    setEditingUserId(u._id);
+    pushToast("Updating user profile", "warning");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDeleteUser = (u) => {
+    setConfirmState({
+      open: true,
+      title: "Remove User Profile",
+      text: `Are you sure you want to permanently remove ${u.name} (${u.email}) from the system?`,
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/users/${u._id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.status === 401) {
+            handleUnauthorized();
+            return;
+          }
+          const data = await res.json();
+          if (res.ok) {
+            pushToast("User removed from system", "warning");
+            fetchUsers();
+          } else {
+            pushToast(data.message || "Delete failed", "danger");
+          }
+        } catch {
+          pushToast("Error deleting user", "danger");
+        } finally {
+          setConfirmState({ open: false, title: "", text: "", onConfirm: null });
+        }
+      },
+    });
+  };
 
   const filteredAssets = useMemo(() => {
     let result = assets.filter((a) => {
@@ -2809,9 +2868,9 @@ if (res.status === 401) {
             <div className="content-grid" style={{ gridTemplateColumns: "1fr 2fr 1fr" }}>
               <div className="panel">
                 <div className="panel-header">
-                  <div className="panel-title">Create User Profile</div>
+                  <div className="panel-title">{editingUserId ? "Update User Profile" : "Create User Profile"}</div>
                   <div className="panel-sub">
-                    Admin-side user panel preview.
+                    {editingUserId ? "Modify user permissions and details." : "Register a new administrative or staff account."}
                   </div>
                 </div>
                 <div className="panel-body">
@@ -2892,8 +2951,8 @@ if (res.status === 401) {
                       </select>
                     </div>
                     <div className="btn-row">
-                      <button className="btn-primary" type="submit">
-                        Add User
+                      <button className={`btn-primary ${editingUserId ? "update" : ""}`} type="submit">
+                        {editingUserId ? "Update User" : "Add User"}
                       </button>
                       <button
                         className="btn-light"
@@ -2932,6 +2991,7 @@ if (res.status === 401) {
                         <th>Role</th>
                         <th>Department</th>
                         <th>Status</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2970,6 +3030,22 @@ if (res.status === 401) {
                               {u.status}
                             </span>
                           </td>
+                          <td>
+                            <div className="td-actions">
+                              <button
+                                className="btn-edit"
+                                onClick={() => handleEditUser(u)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn-del"
+                                onClick={() => handleDeleteUser(u)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -2999,9 +3075,9 @@ if (res.status === 401) {
                       </div>
                     </div>
                     <div className="activity-item">
-                      <div className="activity-title">Current note</div>
+                      <div className="activity-title">User Management status</div>
                       <div className="activity-meta">
-                        User management in this screen is UI-level preview until backend user routes are added.
+                        Full CRUD operations are now enabled for administrative accounts.
                       </div>
                     </div>
                   </div>
